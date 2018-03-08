@@ -1,2 +1,3 @@
+--index-url file:///cray/css/users/chapelu/awallace/pip2pi-arm/simple
 argparse==1.3.0
 scspell3k>=2

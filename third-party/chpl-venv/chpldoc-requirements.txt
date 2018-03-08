@@ -1,3 +1,4 @@
+--index-url file:///cray/css/users/chapelu/awallace/pip2pi-arm/simple
 Jinja2==2.8
 MarkupSafe==0.23
 Pygments>=2,<3
