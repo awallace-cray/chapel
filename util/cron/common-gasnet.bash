@@ -32,7 +32,7 @@ if [ "${tasks}" == "qthreads" ] ; then
     # running in a non-oversubscribed manner. Note that this is NOT
     # indicative of a real performance issue, and that when run on real
     # hardware we get the performance we expect
-    logicalCores=`python -c 'import multiprocessing ; print multiprocessing.cpu_count()'`
+    logicalCores=`python -c 'import multiprocessing ; print min(24, multiprocessing.cpu_count())'`
     if [ $logicalCores -le 8 ] ; then
         export CHPL_TEST_TIMEOUT=1800
     fi
