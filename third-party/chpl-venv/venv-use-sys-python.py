@@ -17,12 +17,10 @@ Python installation (ie, the Python used was not installed as "/usr/bin/python*"
    machine (ie, if no Python is installed in the same location as when the module was built).
 
 2. Rewrite shebang lines (in scripts) in the virtualenv that point to the non-standard Python exe.
-   This change is probably not needed for most situations.
+   Also rewrite a similar construction seen in sphinx scripts, where the shebang line runs "/bin/sh",
+   and (when run by /bin/sh) the 2nd and 3rd lines exec a python executable.
 
 As noted, these fixes are only applicable when building a Cray Chapel module under certain conditions.
-This has been tested only for the cray-xc platform, where the Cray Chapel module was:
- - built on a cray-xc CLE 5 (system Python version 2.6, non-standard user-installed Python 2.7), and
- - installed on a cray-xc CLE 6 (system Python version 2.7).
 """
 
 
@@ -75,13 +73,25 @@ def rw_shebangs(root):
                                 new_firstline = re.sub(r'^.*/bin/python', '#!/usr/bin/python', firstline)
                                 lines[0] = new_firstline
                                 rw = True
+                                print('Rewriting shebang for {0}'.format(abs_f))
+                                print(' - from\t{0}'.format(firstline.rstrip()))
+                                print(' -   to\t{0}'.format(new_firstline.rstrip()))
+
+                        elif re.match(r'#!/[a-z/]*sh *$', firstline):
+                            if re.match(r"'''exec' /.*/bin/python", lines[1]) and re.match(r"' '''", lines[2]):
+                                # second line is a quoted shell exec that points to python
+                                nextline = lines[1]
+                                if not re.match(r"'''exec' /usr/bin/python", nextline):
+                                    # generate a new exec line
+                                    new_nextline = re.sub(r"^'''exec' .*/bin/python", "'''exec' /usr/bin/python", nextline)
+                                    lines[1] = new_nextline
+                                    rw = True
+                                    print("Rewriting 'exec' for {0}".format(abs_f))
+                                    print(' - from\t{0}'.format(nextline.rstrip()))
+                                    print(' -   to\t{0}'.format(new_nextline.rstrip()))
 
                 if rw:
                     # rewrite the file
-                    print('Rewriting shebang for {0}'.format(abs_f))
-                    print(' - from\t{0}'.format(firstline.rstrip()))
-                    print(' -   to\t{0}'.format(new_firstline.rstrip()))
-
                     with open (abs_f, 'w') as fout:
                         for line in lines:
                             fout.write(line)
@@ -94,7 +104,7 @@ def rw_shebangs(root):
 def main(argv=None):
     chpl_venv_install_dir = argv[0]
     rm_python_bins(os.path.join(chpl_venv_install_dir, 'chpl-virtualenv', 'bin'))
-    rw_shebangs(chpl_venv_install_dir)
+    rw_shebangs(os.path.join(chpl_venv_install_dir, 'chpl-virtualenv', 'bin'))
 
 
 if __name__ == '__main__':
